@@ -82,15 +82,34 @@ end
 function move_y()
   local new_y = y + dy
   
-  -- Check Ceiling (Top of head) and Floor (Feet)
-  if fget(mget((x+4)/8, new_y/8), 0) or
-     fget(mget((x+4)/8, (new_y+7)/8), 0) then
-     dy = 0
-     
-     -- Snap to grid logic could go here to prevent jitter
-     -- but for now, just stopping is okay!
-  else
-     y = new_y
+  -- 1. Check Going DOWN (Falling)
+  if (dy > 0) then 
+     -- Check bottom-left and bottom-right of feet
+     if fget(mget(x/8, (new_y+7)/8), 0) or
+        fget(mget((x+7)/8, (new_y+7)/8), 0) then
+        
+        dy = 0 -- Stop falling
+        
+        -- THE FIX: SNAP TO GRID!
+        -- This math forces the player to stand ON TOP of the tile
+        y = flr((new_y+7)/8) * 8 - 8
+        
+     else
+        y = new_y -- Air is safe, keep moving
+     end
+  
+  -- 2. Check Going UP (Jumping head bonk)
+  elseif (dy < 0) then
+     -- Check top-left and top-right of head
+     if fget(mget(x/8, new_y/8), 0) or
+        fget(mget((x+7)/8, new_y/8), 0) then
+        
+        dy = 0 -- Ouch, hit head
+        y = flr(new_y/8) * 8 + 8 -- Snap below the ceiling
+        
+     else
+        y = new_y
+     end
   end
 end
 
